@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изучение английских слов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .word-display {
+            font-size: 3em;
+            margin: 40px 0;
+            color: #2c3e50;
+            min-height: 80px;
+        }
+        .controls {
+            margin: 30px 0;
+        }
+        button {
+            font-size: 1.2em;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #recordBtn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        #recordBtn.recording {
+            background-color: #c0392b;
+            animation: pulse 1.5s infinite;
+        }
+        #nextBtn {
+            background-color: #3498db;
+            color: white;
+        }
+        #nextBtn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 60px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .progress {
+            margin: 20px 0;
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #2ecc71;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Изучение английских слов</h1>
+    <p>Произнесите перевод слова на английском языке</p>
+    
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="word-display" id="currentWord">Загрузка...</div>
+    
+    <div class="controls">
+        <button id="recordBtn">🎤 Нажмите и говорите</button>
+        <button id="nextBtn" disabled>Следующее слово</button>
+    </div>
+    
+    <div class="result" id="result"></div>
+    
+    <div class="info" id="info">
+        <p><strong>Слова для изучения:</strong></p>
+        <p id="wordList"></p>
+        <p><small>Микрофон должен быть разрешен в браузере</small></p>
+    </div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>
