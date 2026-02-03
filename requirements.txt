@@ -4,4 +4,5 @@ python-dotenv==1.0.0
 httpx==0.25.1
 pydub==0.25.1
 python-multipart==0.0.6
-huggingface_hub==0.19.4
+huggingface_hub>=0.27.0
+pyaudioop; python_version >= '3.13'
