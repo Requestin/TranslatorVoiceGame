@@ -3,83 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Изучение английских слов</title>
+    <title>Translator Game AR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
+            margin: 0;
+            overflow: hidden; /* Скрываем скроллбары */
             font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 20px;
-            text-align: center;
+            background-color: #000;
         }
-        .word-display {
-            font-size: 3em;
-            margin: 40px 0;
-            color: #2c3e50;
-            min-height: 80px;
+
+        /* Видео с камеры на заднем плане */
+        #camera-feed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
         }
-        .controls {
-            margin: 30px 0;
+
+        /* 3D Canvas поверх видео */
+        #game-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none; /* Пропускаем клики сквозь канвас */
         }
-        button {
-            font-size: 1.2em;
-            padding: 15px 30px;
-            margin: 10px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
+
+        /* Интерфейс пользователя (HUD) */
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none; /* Чтобы кликать только по кнопкам */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        #recordBtn {
-            background-color: #e74c3c;
-            color: white;
+
+        .top-bar {
+            width: 90%;
+            margin-top: 20px;
+            pointer-events: auto;
         }
-        #recordBtn.recording {
-            background-color: #c0392b;
-            animation: pulse 1.5s infinite;
-        }
-        #nextBtn {
-            background-color: #3498db;
-            color: white;
-        }
-        #nextBtn:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-        .result {
-            margin: 20px 0;
-            padding: 15px;
-            border-radius: 8px;
-            min-height: 60px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
+
         .progress {
-            margin: 20px 0;
             height: 10px;
-            background-color: #ecf0f1;
+            background-color: rgba(255, 255, 255, 0.3);
             border-radius: 5px;
             overflow: hidden;
+            backdrop-filter: blur(5px);
         }
+
         .progress-bar {
             height: 100%;
             background-color: #2ecc71;
             width: 0%;
-            transition: width 0.3s;
+            transition: width 0.5s;
         }
+
+        /* Текущее слово (задание) */
+        .word-display {
+            font-size: 2.5em;
+            margin-top: 20px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 30px;
+            border-radius: 20px;
+            pointer-events: auto;
+        }
+
+        /* Кнопки управления */
+        .controls {
+            margin-top: auto; /* Прижимаем к низу */
+            margin-bottom: 40px;
+            pointer-events: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            font-size: 1.2em;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        #recordBtn {
+            background-color: #e74c3c;
+            color: white;
+            min-width: 200px;
+        }
+
+        #recordBtn.recording {
+            background-color: #c0392b;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Попап с результатом */
+        .popup-result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            max-width: 80%;
+            
+            /* Дефолтная подложка для любого текста (например "Слушаю...") */
+            background-color: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .popup-success {
+            background-color: rgba(46, 204, 113, 0.8); /* Зеленый полупрозрачный */
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        }
+
+        .popup-error {
+            background-color: rgba(231, 76, 60, 0.8); /* Красный полупрозрачный */
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .popup-visible {
+            opacity: 1;
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -88,28 +160,29 @@
     </style>
 </head>
 <body>
-    <h1>🎯 Изучение английских слов</h1>
-    <p>Произнесите перевод слова на английском языке</p>
-    
-    <div class="progress">
-        <div class="progress-bar" id="progressBar"></div>
+    <!-- 1. Видео с камеры -->
+    <video id="camera-feed" autoplay playsinline muted></video>
+
+    <!-- 2. Слой с UI -->
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="word-display" id="currentWord">Загрузка...</div>
+
+        <!-- Попап для результатов -->
+        <div id="popupResult" class="popup-result"></div>
+
+        <div class="controls">
+            <button id="recordBtn">🎤 Говорить</button>
+            <!-- Кнопка Next теперь скрыта, переход автоматический, но оставим функционал в коде -->
+        </div>
     </div>
-    
-    <div class="word-display" id="currentWord">Загрузка...</div>
-    
-    <div class="controls">
-        <button id="recordBtn">🎤 Нажмите и говорите</button>
-        <button id="nextBtn" disabled>Следующее слово</button>
-    </div>
-    
-    <div class="result" id="result"></div>
-    
-    <div class="info" id="info">
-        <p><strong>Слова для изучения:</strong></p>
-        <p id="wordList"></p>
-        <p><small>Микрофон должен быть разрешен в браузере</small></p>
-    </div>
-    
+
+    <!-- 3. Скрипт -->
     <script src="/static/app.js"></script>
 </body>
 </html>
